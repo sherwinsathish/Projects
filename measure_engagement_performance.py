@@ -17,7 +17,7 @@ def convert_video_to_base64(video_path):
         video_base64 = base64.b64encode(video_file.read()).decode("utf-8")
     return video_base64
 
-# Example paths for your high and low engagement video files
+# Example paths for my high and low engagement video files
 high_video_path = "/home/mina/Downloads/q1high.mp4"
 low_video_path = "/home/mina/Downloads/q1low.mp4"
 high_video_pathq4 = "/home/mina/Downloads/q4high.mp4"

@@ -43,23 +43,27 @@ def get_random_clips(data_dir: str, n: int) -> List[str]:
     """
     Collect ALL .mp4 clips from every folder and subfolder within data_dir,
     and randomly return 'n' clips (or fewer if there are not enough clips).
+    os - functions to interact with the operating system (Work with files and directories)
+    .listdir(path) - returns a list of all files and folders in the path directory
+    .path.join(path1,path2,...) - Join multiple parts of a file path together
+    .path.isdir(path) - Check if path is a folder
     """
-    all_clips = []
-    for session_folder in os.listdir(data_dir):
-        session_path = os.path.join(data_dir, session_folder)
-        if not os.path.isdir(session_path):
+    all_clips = [] #Create an empty list
+    for session_folder in os.listdir(data_dir): #Takes the directory and goes through the folders and files of them
+        session_path = os.path.join(data_dir, session_folder) #Adds on to the given directory with the subfolder/files ex: video/clip001
+        if not os.path.isdir(session_path): #Makes sure that only folders are being added to data_dir not files
             continue
-        for clip_folder in os.listdir(session_path):
-            clip_path = os.path.join(session_path, clip_folder)
-            if not os.path.isdir(clip_path):
+        for clip_folder in os.listdir(session_path): #Loops through the second level subfolders
+            clip_path = os.path.join(session_path, clip_folder)# Adds the second level subfolder to the path
+            if not os.path.isdir(clip_path):#Makes sure only folders being added
                 continue
-            for clip_file in os.listdir(clip_path):
-                if clip_file.endswith(".mp4"):
-                    clip_file_path = os.path.join(clip_path, clip_file)
-                    all_clips.append(clip_file_path)
+            for clip_file in os.listdir(clip_path):#Looping through the files in the second level subfolders
+                if clip_file.endswith(".mp4"): #Checks if the file is an .mp4 Video
+                    clip_file_path = os.path.join(clip_path, clip_file) # Adds file name to existing path, if it ends in .mp4
+                    all_clips.append(clip_file_path) # Adds full path to the list
     
     # Randomly sample 'n' clips and print the result
-    sampled_clips = random.sample(all_clips, min(n, len(all_clips)))
+    sampled_clips = random.sample(all_clips, min(n, len(all_clips))) #Randomly selects n number of clips from all clips
     print(f"Randomly sampled clips ({len(sampled_clips)}):")
     for clip in sampled_clips:
         print(f"  - {clip}")
@@ -69,15 +73,19 @@ def get_random_clips(data_dir: str, n: int) -> List[str]:
 def upload_to_gcs(bucket_name: str, file_paths: List[str]) -> List[str]:
     """
     Uploads a list of files to a specified Google Cloud Storage bucket.
+    By creating a client object we can interface between the Python program and GCS services
+    .bucket() - returns a bucket object to the bucket you connected to, with this we can upload files
+    .blob() - creates blob object representing the file in the bucket, basically a pointer 
+    URI identifies the resource, URL identifies and locates it
     """
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    gcs_uris = []
-    for file_path in file_paths:
-        file_name = os.path.basename(file_path)
-        blob = bucket.blob(file_name)
-        blob.upload_from_filename(file_path)
-        gcs_uri = f"gs://{bucket_name}/{file_name}"
+    storage_client = storage.Client() # Creates a client object connecting to GCS, Allowing interaction with GCS such as uploading files
+    bucket = storage_client.bucket(bucket_name)#Makes a reference to the GCS where we want to upload files
+    gcs_uris = [] #Creates a list to store the GCS URL of uploaded files
+    for file_path in file_paths: #Loop through the clips
+        file_name = os.path.basename(file_path) #Extract only the file name 
+        blob = bucket.blob(file_name)#Blob represents a file stored in GCS bucket, Bucket is referenced and new object(blob) is created in the bucket with the file name
+        blob.upload_from_filename(file_path)#Upload the local file to the GCS bucket
+        gcs_uri = f"gs://{bucket_name}/{file_name}"#Generating GCS URI 
         gcs_uris.append(gcs_uri)
         print(f"Uploaded {file_name} to {gcs_uri}.")
     return gcs_uris
@@ -631,7 +639,7 @@ if __name__ == "__main__":
     random_clips = get_random_clips(DATA_DIR, N_CLIPS)
     
     # Extract clip names and full paths
-    clip_names = [os.path.basename(clip) for clip in random_clips]
+    clip_names = [os.path.basename(clip) for clip in random_clips] #Extracts only video.mp4, only the file name
     clip_full_paths = random_clips  # Full paths
 
     # Upload clips to GCS
